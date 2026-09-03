@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>CopyFinder</RootNamespace>
+    <AssemblyName>CopyFinder</AssemblyName>
+    <Version>3.0.0</Version>
+    <InformationalVersion>3.0.0-linux</InformationalVersion>
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <ProjectReference Include="../CopyFinder.Core/CopyFinder.Core.csproj" />
+    <AvaloniaResource Include="Assets/**" />
+    <Content Include="Assets/CopyFinder-icon.png"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

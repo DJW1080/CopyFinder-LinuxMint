@@ -1,0 +1,278 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CopyFinder.ViewModels"
+        x:Class="CopyFinder.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Technification CopyFinder 3.0.0 — Linux Mint"
+        Width="1480"
+        Height="960"
+        MinWidth="850"
+        MinHeight="650"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/CopyFinder-icon.png">
+  <Grid Margin="14" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="10">
+    <Border Grid.Row="0"
+            Height="124"
+            Background="#000013"
+            BorderBrush="#1A1F28"
+            BorderThickness="1"
+            ClipToBounds="True">
+      <Image Source="/Assets/CopyFinder-Banner-08.png"
+             Stretch="Uniform"
+             HorizontalAlignment="Center" />
+    </Border>
+
+    <Border Grid.Row="1" Classes="panel" Padding="12">
+      <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
+        <TextBox x:Name="FolderPathBox"
+                 PlaceholderText="Choose a folder to scan"
+                 Text="{Binding FolderPath, Mode=TwoWay}"
+                 AutomationProperties.Name="Folder to scan" />
+        <Button x:Name="BrowseButton"
+                Grid.Column="1"
+                Content="Browse"
+                Click="BrowseButton_Click" />
+        <Button x:Name="ScanButton"
+                Grid.Column="2"
+                Classes="primary"
+                MinWidth="120"
+                Content="Scan"
+                IsEnabled="{Binding !IsScanning}"
+                Click="ScanButton_Click" />
+        <Button x:Name="CancelButton"
+                Grid.Column="3"
+                MinWidth="120"
+                Content="Cancel"
+                IsEnabled="{Binding IsScanning}"
+                Click="CancelButton_Click" />
+      </Grid>
+    </Border>
+
+    <Expander x:Name="SettingsPanel"
+              Grid.Row="2"
+              Header="Scan Settings"
+              Background="#202B3B"
+              Foreground="{DynamicResource SecondaryBrush}"
+              HorizontalAlignment="Stretch">
+      <Border Classes="panel" Padding="14" Margin="0,6,0,0">
+        <Grid ColumnDefinitions="1.35*,1.35*,0.7*,0.7*"
+              RowDefinitions="Auto,Auto"
+              ColumnSpacing="16"
+              RowSpacing="12">
+          <StackPanel Grid.Column="0" Spacing="5">
+            <TextBlock Text="Keep rule" Foreground="{DynamicResource MutedTextBrush}" />
+            <ComboBox ItemsSource="{Binding KeepRules}"
+                      SelectedItem="{Binding KeepRule, Mode=TwoWay}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="5">
+            <TextBlock Text="Preferred folder" Foreground="{DynamicResource MutedTextBrush}" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="7">
+              <TextBox Classes="settings"
+                       Text="{Binding PreferredFolder, Mode=TwoWay}"
+                       PlaceholderText="Optional" />
+              <Button Grid.Column="1"
+                      Classes="compact"
+                      Content="Browse"
+                      Click="PreferredFolderButton_Click" />
+            </Grid>
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="5">
+            <TextBlock Text="Hash workers" Foreground="{DynamicResource MutedTextBrush}" />
+            <NumericUpDown Minimum="1"
+                           Maximum="16"
+                           Value="{Binding HashWorkers, Mode=TwoWay}" />
+          </StackPanel>
+          <StackPanel Grid.Column="3" Spacing="5">
+            <TextBlock Text="Review limit" Foreground="{DynamicResource MutedTextBrush}" />
+            <NumericUpDown Minimum="1"
+                           Maximum="100000"
+                           Value="{Binding ScanLimit, Mode=TwoWay}" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="1" Grid.Column="0" Spacing="5">
+            <TextBlock Text="Minimum size (KB)" Foreground="{DynamicResource MutedTextBrush}" />
+            <NumericUpDown Minimum="0"
+                           Maximum="100000000"
+                           Value="{Binding MinimumSizeKb, Mode=TwoWay}" />
+          </StackPanel>
+          <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+            <TextBlock Text="Excluded extensions" Foreground="{DynamicResource MutedTextBrush}" />
+            <TextBox Classes="settings"
+                     Text="{Binding ExcludedExtensionsText, Mode=TwoWay}"
+                     PlaceholderText="tmp, cache, bak" />
+          </StackPanel>
+          <CheckBox Grid.Row="1"
+                    Grid.Column="2"
+                    Grid.ColumnSpan="2"
+                    VerticalAlignment="Center"
+                    Content="Skip hidden dotfiles"
+                    IsChecked="{Binding SkipHiddenFiles, Mode=TwoWay}" />
+        </Grid>
+      </Border>
+    </Expander>
+
+    <Border Grid.Row="3" Classes="panel" Padding="14,10">
+      <Grid ColumnDefinitions="200,*" ColumnSpacing="14">
+        <ProgressBar Height="7"
+                     VerticalAlignment="Center"
+                     IsIndeterminate="{Binding IsScanning}"
+                     IsVisible="{Binding IsScanning}" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+          <TextBlock Text="{Binding StatusText}"
+                     Foreground="{DynamicResource SecondaryBrush}"
+                     FontSize="15"
+                     FontWeight="SemiBold"
+                     AutomationProperties.Name="Scan status" />
+          <TextBlock Text="{Binding SummaryText}"
+                     Foreground="{DynamicResource MutedTextBrush}"
+                     FontSize="14" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="4" Classes="panel" ClipToBounds="True">
+      <Grid RowDefinitions="46,*">
+        <Border Background="{DynamicResource PrimaryBrush}">
+          <Grid MinWidth="1120"
+                ColumnDefinitions="42,62,174,260,90,145,360"
+                Margin="8,0">
+            <TextBlock Grid.Column="2" Text="Actions" VerticalAlignment="Center" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="3" Text="File Name" VerticalAlignment="Center" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="4" Text="Size" VerticalAlignment="Center" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="5" Text="Modified" VerticalAlignment="Center" FontWeight="SemiBold" />
+            <TextBlock Grid.Column="6" Text="Path" VerticalAlignment="Center" FontWeight="SemiBold" />
+          </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto">
+          <ItemsControl x:Name="DuplicateGroupList"
+                        ItemsSource="{Binding DuplicateGroups}"
+                        MinWidth="1120">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:DuplicateGroupViewModel">
+                <Expander IsExpanded="True"
+                          Background="{DynamicResource GroupHeaderBrush}"
+                          BorderBrush="{DynamicResource AppBorderBrush}"
+                          BorderThickness="0,0,0,1">
+                  <Expander.Header>
+                    <Grid MinWidth="1060"
+                          ColumnDefinitions="118,190,*"
+                          Margin="8,5"
+                          ColumnSpacing="10">
+                      <TextBlock Text="{Binding HeaderText}"
+                                 VerticalAlignment="Center"
+                                 Foreground="{DynamicResource SecondaryBrush}"
+                                 FontSize="16"
+                                 FontWeight="SemiBold" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7">
+                        <Button Classes="compact"
+                                Content="Select"
+                                Click="SelectGroupButton_Click" />
+                        <Button Classes="compact"
+                                Content="Deselect"
+                                Click="DeselectGroupButton_Click" />
+                      </StackPanel>
+                      <TextBlock Grid.Column="2"
+                                 Text="{Binding ConfidenceText}"
+                                 VerticalAlignment="Center"
+                                 Foreground="{DynamicResource SecondaryBrush}"
+                                 TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                  </Expander.Header>
+
+                  <ItemsControl ItemsSource="{Binding Files}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate DataType="vm:DuplicateFileViewModel">
+                        <Border Classes="result-row"
+                                Classes.odd="{Binding IsOddRow}"
+                                MinHeight="76"
+                                Padding="8,7">
+                          <Grid ColumnDefinitions="42,62,174,260,90,145,360"
+                                ColumnSpacing="0">
+                            <CheckBox VerticalAlignment="Center"
+                                      HorizontalAlignment="Center"
+                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                      IsEnabled="{Binding IsDuplicate}"
+                                      AutomationProperties.Name="Select duplicate" />
+                            <Border Grid.Column="1"
+                                    Width="50"
+                                    Height="58"
+                                    Padding="4"
+                                    Background="#15191E"
+                                    BorderBrush="#363D47"
+                                    BorderThickness="1">
+                              <Image Source="{Binding IconAsset}" Stretch="Uniform" />
+                            </Border>
+                            <StackPanel Grid.Column="2"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        Spacing="7">
+                              <Button Classes="compact"
+                                      Content="Keep"
+                                      IsEnabled="{Binding IsDuplicate}"
+                                      Click="KeepButton_Click" />
+                              <Button Classes="compact"
+                                      Content="Open"
+                                      Click="OpenButton_Click" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                              <TextBlock Text="{Binding FileName}"
+                                         FontSize="15"
+                                         TextTrimming="CharacterEllipsis" />
+                              <TextBlock Text="{Binding ResolutionText}"
+                                         FontSize="12"
+                                         Foreground="{DynamicResource MutedTextBrush}" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="4"
+                                       Text="{Binding SizeText}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="5"
+                                       Text="{Binding LastWriteText}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="6"
+                                       Text="{Binding Path}"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip.Tip="{Binding Path}" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Expander>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="5" Classes="panel" Padding="12">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <TextBlock Text="{Binding StatusText}"
+                   VerticalAlignment="Center"
+                   Foreground="{DynamicResource SecondaryBrush}"
+                   FontSize="15" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+          <Button x:Name="ExportButton"
+                  Content="Export report"
+                  IsEnabled="{Binding CanExport}"
+                  Click="ExportButton_Click" />
+          <Button Content="Select duplicates"
+                  IsEnabled="{Binding CanSelectAll}"
+                  Click="SelectAllButton_Click" />
+          <Button Content="Deselect all"
+                  IsEnabled="{Binding CanDeselectAll}"
+                  Click="DeselectAllButton_Click" />
+          <Button x:Name="DeleteButton"
+                  Classes="danger"
+                  Content="Move Duplicates to Trash"
+                  IsEnabled="{Binding CanDelete}"
+                  Click="DeleteButton_Click" />
+        </StackPanel>
+      </Grid>
+    </Border>
+  </Grid>
+</Window>
