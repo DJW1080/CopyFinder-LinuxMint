@@ -1,88 +1,65 @@
-# CopyFinder — Linux Mint Edition
+# CopyFinder for Linux Mint
 
-![CopyFinder](Technification/Logo/CopyFinder-Banner-08.png)
+A fresh native GTK implementation of CopyFinder's duplicate-file review workflow. The Windows 2.1.8 reference was inspected to specify behaviour and appearance. No Windows or existing Linux-edition application code was ported.
 
-![Linux Mint](https://img.shields.io/badge/Linux%20Mint-22.3-86BE43?logo=linuxmint)
-![CPU](https://img.shields.io/badge/CPU-x86__64-31c5f3)
-![Made in Melbourne](https://img.shields.io/badge/Made%20in-Melbourne-FFB6C1)
-![Licence](https://img.shields.io/badge/Licence-CC0%201.0-lightgrey)
-![Version](https://img.shields.io/badge/Version-3.0.0-0797F2)
+The current source baseline is version **0.1.0**. It replaces the previous implementation in this repository; earlier versions remain in Git history. Generated packages and Python caches are excluded from the source baseline.
 
-A Linux Mint desktop application for finding, reviewing, and safely removing duplicate files.
+## Run
 
-CopyFinder 3 preserves Dean John Weiniger's original Technification interface and product workflow while replacing the Windows implementation with .NET 10, Avalonia, XDG storage, Nemo-compatible folder opening, and GIO Trash.
+Target: Linux Mint 22.3 Cinnamon, Python 3.12 and GTK 4.14. Minimum API requirement: GTK 4.10 and Python 3.10. Other distributions, desktops and Wayland have not yet been accepted.
 
-> Looking for the Windows edition? Visit [CopyFinder for Windows](https://github.com/DJW1080/CopyFinder). The Windows and Linux Mint editions are maintained as separate repositories.
+Install the desktop dependencies if absent:
 
-![CopyFinder 3.0.0 running on Linux Mint](Technification/CopyFinder-LinuxMint-3.0.0.png)
-
-## 🐧 Application Behaviour
-
-- Recursively scans a selected folder without following symbolic-link directories.
-- Groups candidates by size, then verifies matching content with SHA-256.
-- Chooses one file to keep using original-name, shortest-name, oldest, newest, preferred-folder, or highest-resolution rules.
-- Lets you change the kept file and select duplicates by group or across the complete scan.
-- Revalidates the kept file and every selected duplicate immediately before removal.
-- Moves validated duplicates to the Linux desktop Trash through GIO. It never falls back to permanent deletion.
-- Exports the review as CSV or JSON and opens file locations in the Mint file manager.
-- Stores settings, logs, and cache files in the standard XDG user directories.
-
-## 📦 Install a Release
-
-The release archive is self-contained; end users do not need to install .NET.
-
-```bash
-sha256sum -c CopyFinder-v3.0.0-linux-x64.tar.gz.sha256
-mkdir -p CopyFinder-v3.0.0
-tar -xzf CopyFinder-v3.0.0-linux-x64.tar.gz -C CopyFinder-v3.0.0
-cd CopyFinder-v3.0.0
-./install.sh
+```sh
+sudo apt install python3 python3-gi gir1.2-gtk-4.0 python3-pil
 ```
 
-The installer is local to your user account and never uses `sudo`. Open the Mint menu and search for **CopyFinder**. See [INSTALL.md](INSTALL.md) for update, uninstall, and data-location details.
+From this project directory:
 
-## 🛠️ Build and Test
-
-Requirements: Linux Mint 22.3 x86-64 and the .NET 10 SDK.
-
-```bash
-dotnet restore CopyFinder.sln
-dotnet build CopyFinder.sln -c Release --no-restore -warnaserror
-dotnet test CopyFinder.sln -c Release --no-build
-dotnet run --project src/CopyFinder.App/CopyFinder.App.csproj
+```sh
+/usr/bin/python3 -m copyfinder
 ```
 
-Create a self-contained release archive and SHA-256 checksum:
+Use the system Python because PyGObject and GTK come from the distribution packages. The application runs as your ordinary user.
 
-```bash
-./publish.sh
+## Workflow
+
+Choose one folder, adjust Scan Settings if needed, and select Scan. Files match only when nonzero sizes and full SHA-256 hashes match. One file per group is kept; other files are selected initially. Keep changes that choice. Open reveals a file in the desktop file manager. Review selections before Delete Duplicates. A confirmation is always required.
+
+The six keep choices are Original, Shortest name, Oldest file, Newest file, Folder and Highest Resolution. Original is a filename preference, not proof of provenance. Oldest/Newest use modification time. Highest Resolution operates within exact-content groups; CopyFinder does not compare visual similarity.
+
+The default review limit is 500 duplicate files, excluding kept files. Reaching it means the scan stopped for review. Later files, including a more-preferred kept copy, may not have been evaluated. Inventory is stored temporarily in SQLite; only same-size candidates are hashed, with a bounded worker queue.
+
+Image metadata inspection has a 1 MiB cumulative source-read budget. If a decoder needs more, dimensions are reported as unknown; SHA-256 still covers the entire file. Previews use category icons for files larger than 32 MiB or images above 40 million pixels. Two background preview workers and a 128-item thumbnail cache bound normal review work. These are explicit resource limits of this Linux implementation.
+
+## Linux file behaviour
+
+- Skip hidden files includes dotfiles and hidden directories.
+- Skip system files excludes `/dev`, `/proc`, `/sys`, and `/run`. Known virtual filesystems and `/dev`, `/proc`, `/sys` remain excluded regardless.
+- Symlinks and special files are never hashed. Scan roots with symlink ancestors are rejected. Use the real directory path.
+- Hard-link aliases count as one physical file. A candidate that has hard links is refused at deletion, since removing one name would not free the file's content.
+- Ordinary mounted network/removable folders can be scanned when readable. Remote classification is best-effort, based on Linux mount information and GVfs paths.
+
+Before Trash, both files are checked against the scan's identity, size, modification/change timestamps and hash. Changed, replaced, missing, aliased or inaccessible files are rejected. The kept survivor is checked again afterwards. GIO uses a pathname for Trash; arbitrary concurrent filesystem changes cannot be made atomic with that operation. If confirmation fails after moving a file, CopyFinder reports the uncertainty and retains its review row. Inspect Trash and rescan.
+
+Trash is the only removal action. A mount without working Trash leaves the file in place. There is no permanent-deletion fallback, permission repair, ownership change or elevated helper. Recovery uses your file manager's Trash.
+
+CSV and JSON export current review state with the Windows reference's field names. DeleteStatus means Kept/Selected/Not selected, not deletion history.
+
+## Configuration and logs
+
+Settings: `$XDG_CONFIG_HOME/copyfinder/settings.json` (default `~/.config/copyfinder/settings.json`). Logs: `$XDG_STATE_HOME/copyfinder/copyfinder.log` (default `~/.local/state/copyfinder/copyfinder.log`). Logs rotate and can contain filenames. Settings and export writes use atomic replacement. Invalid settings are left untouched and reported rather than silently overwritten.
+
+The first launch of each version shows a Linux compatibility report. These diagnostics do not claim every mounted filesystem supports Trash.
+
+## Test and package
+
+```sh
+make test
+make package
+sudo apt install ./dist/copyfinder_0.1.0_all.deb
 ```
 
-## 🛡️ Safety and Privacy
+GTK integration tests require a display. The package installs the CopyFinder menu launcher and application files; user settings remain on removal. The build creates a local `.deb` and makes no network changes. See `docs/validation.md` for the exact verification performed and remaining limitations.
 
-CopyFinder operates locally. File contents are read only to calculate hashes and image dimensions; nothing is uploaded. Selected files are checked again before GIO is called, and a failed validation or failed Trash operation leaves the row and file untouched.
-
-- Settings: `${XDG_CONFIG_HOME:-~/.config}/CopyFinder/settings.json`
-- Logs: `${XDG_STATE_HOME:-~/.local/state}/CopyFinder/logs/copyfinder.log`
-- Cache: `${XDG_CACHE_HOME:-~/.cache}/CopyFinder`
-
-## 🗂️ Project Guides
-
-- [INSTALL.md](INSTALL.md) — installation, updates, data locations, and uninstallation.
-- [REPO_LAYOUT.md](REPO_LAYOUT.md) — source-code and packaging directory map.
-- [CHANGELOG.md](CHANGELOG.md) — release history and verification notes.
-- [Linux Mint verification](docs/verification/linux-mint-22.3.md) — tested platform behaviour and acceptance checks.
-
-## 📝 Credits
-
-Created and directed by **Dean John Weiniger** in Melbourne, Australia.
-
-The original interface styling concept was developed with assistance from **GitHub Copilot**.
-
-**Human-AI collaboration**
-
-CopyFinder was conceived and directed by Dean John Weiniger, who designed and refined the interface and product experience. The application code was developed with assistance from ChatGPT by OpenAI. The project is presented as a demonstration of practical human-AI collaboration in desktop application development.
-
-## 📜 Licence
-
-This project is dedicated to the public domain under the [Creative Commons CC0 1.0 Universal License](LICENSE).
+The banner and category artwork come from the pinned original reference. Linux window decorations, font rendering and file dialogs follow the local desktop. See `NOTICE.md` for provenance.

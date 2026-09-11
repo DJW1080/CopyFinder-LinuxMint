@@ -1,17 +1,5 @@
-# Build and test output
-bin/
-obj/
-TestArtifacts/
-
-# Release output
-publish/
-artifacts/
-TestResults/
-
-# Local IDE state
-.vs/
-.idea/
-.vscode/
-*.user
-*.suo
-*.rsuser
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+.venv/
