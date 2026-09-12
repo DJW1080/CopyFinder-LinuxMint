@@ -4,6 +4,11 @@ A fresh native GTK implementation of CopyFinder's duplicate-file review workflow
 
 The current source baseline is version **0.1.0**. It replaces the previous implementation in this repository; earlier versions remain in Git history. Generated packages and Python caches are excluded from the source baseline.
 
+## Contributors
+
+- **Dean John Weiniger (DJW1080)** — project creator and maintainer; requirements, direction, and release approvals.
+- **OpenAI Codex** — AI development co-contributor for the native Linux implementation, tests, packaging, and documentation, working under Dean's direction.
+
 ## Run
 
 Target: Linux Mint 22.3 Cinnamon, Python 3.12 and GTK 4.14. Minimum API requirement: GTK 4.10 and Python 3.10. Other distributions, desktops and Wayland have not yet been accepted.

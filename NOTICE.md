@@ -4,4 +4,4 @@ The application code, UI definitions, styles and tests in this workspace were wr
 
 Files under `copyfinder/assets` originate from the reference commit's `Technification` artwork: banner, application icon and file-category icons. `copyfinder.png` is a PNG representation of that application icon. The reference repository identifies its work as CC0 1.0. The included LICENSE is its published dedication text.
 
-CopyFinder was created and directed by Dean John Weiniger. This fresh Linux implementation was developed with assistance from OpenAI Codex at the user's request.
+CopyFinder was created and directed by Dean John Weiniger, who maintains the project. OpenAI Codex is credited as the AI development co-contributor for the native Linux implementation, tests, packaging, and documentation. This work was produced at Dean's request and under his direction.
